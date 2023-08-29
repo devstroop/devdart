@@ -3,7 +3,7 @@ description: An exclusive enterprise grade developer package
 version: 0.0.1
 homepage: https://github.com/devstroop/devdart.git
 
-publish_to: 'pub.dev'
+# publish_to: 'none'
 
 environment:
   sdk: '>=3.0.6 <4.0.0'

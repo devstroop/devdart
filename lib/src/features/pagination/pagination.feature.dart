@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class PaginationFeature<T> extends StatefulWidget {
+class PaginationFeature<T> extends StatelessWidget {
   const PaginationFeature({
     Key? key,
     required this.pageSize,
@@ -9,7 +9,6 @@ class PaginationFeature<T> extends StatefulWidget {
     required this.itemBuilder,
     this.fetchAsync,
     this.fetchSync,
-    // this.footer,
     this.separator,
     this.padding,
     this.onPageChanged,
@@ -27,22 +26,16 @@ class PaginationFeature<T> extends StatefulWidget {
   final Function(int)? onPageChanged;
 
   @override
-  State<PaginationFeature<T>> createState() => PaginationFeatureState<T>();
-}
-
-class PaginationFeatureState<T> extends State<PaginationFeature<T>> {
-  @override
   Widget build(BuildContext context) {
     return Builder(
       builder: (context) {
-        if (widget.fetchAsync != null) {
+        if (fetchAsync != null) {
           return buildListView(
-            widget.fetchAsync!(widget.pageSize, widget.currentPage),
+            fetchAsync!(pageSize, currentPage),
           );
-        } else if (widget.fetchSync != null) {
+        } else if (fetchSync != null) {
           return buildListView(
-            Future.value(
-                widget.fetchSync!(widget.pageSize, widget.currentPage)),
+            Future.value(fetchSync!(pageSize, currentPage)),
           );
         } else {
           return const Center(
@@ -57,72 +50,58 @@ class PaginationFeatureState<T> extends State<PaginationFeature<T>> {
       future: data,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-        return const LinearProgressIndicator();
+          return Container(
+              height: MediaQuery.of(context).size.height * 0.45,
+              alignment: Alignment.center,
+              child: const CupertinoActivityIndicator());
         }
-        if (snapshot.hasError) {
-          return const Center(child: Text('Error'));
-        }
-        if (snapshot.hasData) {
-          // column with footer widget, contains next page button, prev page button, and page number, footer widget must be inside column
-          return Column(
-            children: [
-              ...snapshot.data!
-                  .map(
-                    (e) => Container(
-                      margin: widget.inBetweenMargin,
-                      child: widget.itemBuilder(
-                        context,
-                        e,
-                        snapshot.data!.indexOf(e),
-                      ),
+        List<T> data = snapshot.data ?? [];
+        return Column(
+          children: [
+            ...data
+                .map(
+                  (e) => Container(
+                    margin: inBetweenMargin,
+                    child: itemBuilder(
+                      context,
+                      e,
+                      snapshot.data!.indexOf(e),
                     ),
-                  )
-                  .toList(),
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 24.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
+                  ),
+                )
+                .toList(),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 24.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  if (currentPage > 0)
                     IconButton(
-                      onPressed: () => setState(() =>
-                          widget.onPageChanged?.call(widget.currentPage - 1)),
+                      onPressed: () => onPageChanged?.call(currentPage - 1),
                       icon: const Icon(Icons.arrow_back_ios),
+                    )
+                  else
+                    const IconButton(
+                      onPressed: null,
+                      icon: Icon(Icons.arrow_back_ios),
                     ),
-                    Text('Page ${widget.currentPage + 1}'),
+                  Text('Page ${currentPage + 1}'),
+                  if (!snapshot.hasError)
                     IconButton(
-                      onPressed: () => setState(() {
-                        widget.onPageChanged?.call(widget.currentPage + 1);
-                      }),
+                      onPressed: () => onPageChanged?.call(currentPage + 1),
                       icon: const Icon(Icons.arrow_forward_ios),
-                    ),
-                  ],
-                ),
-              )
-            ],
-          );
-          // return widget.separatorBuilder != null
-          //     ? ListView.separated(
-          //         controller: widget.controller,
-          //         padding: widget.padding,
-          //         itemCount: snapshot.data!.length,
-          //         itemBuilder: (context, index) =>
-          //             widget.itemBuilder(context, snapshot.data![index], index),
-          //         separatorBuilder: widget.separatorBuilder!,
-          //       )
-          //     : ListView.builder(
-          //         controller: widget.controller,
-          //         padding: widget.padding,
-          //         itemCount: snapshot.data!.length,
-          //         itemBuilder: (context, index) =>
-          //             widget.itemBuilder(context, snapshot.data![index], index),
-          //       );
-        }
-        return const LinearProgressIndicator();
+                    )
+                  else
+                    const IconButton(
+                      onPressed: null,
+                      icon: Icon(Icons.arrow_forward_ios),
+                    )
+                ],
+              ),
+            )
+          ],
+        );
       },
     );
-  }
-
-  Future<void> refresh() async {
-    setState(() {});
   }
 }
